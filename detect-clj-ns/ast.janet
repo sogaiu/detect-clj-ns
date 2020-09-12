@@ -7,8 +7,8 @@
 
 (defn forms
   [src]
-  (when-let [ast (rw/ast src)]
-    (drop 1 ast)))
+  (-?>> (rw/ast src)
+        (drop 1)))
 
 (comment
 
@@ -47,8 +47,8 @@
 
 (defn list-node?
   [ast]
-  (when-let [tag (first ast)]
-    (= :list tag)))
+  (-?> (first ast)
+       (= :list)))
 
 (comment
 
@@ -59,8 +59,8 @@
 
 (defn whitespace?
   [ast]
-  (when-let [tag (first ast)]
-    (= :whitespace tag)))
+  (-?> (first ast)
+       (= :whitespace)))
 
 (comment
 
@@ -71,8 +71,8 @@
 
 (defn line-comment?
   [ast]
-  (when-let [tag (first ast)]
-    (= :comment tag)))
+  (-?> (first ast)
+       (= :comment)))
 
 (comment
 
@@ -133,8 +133,8 @@
 
 (defn discard-with-form?
   [ast]
-  (when-let [tag (first ast)]
-    (= :discard tag)))
+  (-?> (first ast)
+       (= :discard)))
 
 (comment
 
@@ -209,8 +209,8 @@
 
 (defn symbol-node?
   [ast]
-  (when-let [tag (first ast)]
-    (= :symbol tag)))
+  (-?> (first ast)
+       (= :symbol)))
 
 (comment
 
@@ -306,8 +306,8 @@
 
 (defn metadata-node?
   [ast]
-  (when-let [tag (first ast)]
-    (= :metadata tag)))
+  (-?> (first ast)
+       (= :metadata)))
 
 (comment
 
@@ -324,8 +324,8 @@
 
 (defn metadata-entry-node?
   [ast]
-  (when-let [tag (first ast)]
-    (= tag :metadata-entry)))
+  (-?> (first ast)
+       (= :metadata-entry)))
 
 (comment
 

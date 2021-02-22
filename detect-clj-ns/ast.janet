@@ -1,5 +1,7 @@
 # TODO:
 #
+# * credit pyrmont for tip on -?>
+#
 # * might be better if things like metadata-node? didn't just return true,
 #   but rather the "ast" that was passed in
 
@@ -15,14 +17,20 @@
   (forms "")
   # => '()
 
-  (forms ``;; another form
-(+ 2 2)``)
-  ``'((:comment ";; another form") (:whitespace "\n")
+  (deep=
+    #
+    (forms
+      ``
+      ;; another form
+      (+ 2 2)
+      ``)
+    #
+    '((:comment ";; another form") (:whitespace "\n")
       (:list
-       (:symbol "+") (:whitespace " ")
-       (:number "2") (:whitespace " ")
-       (:number "2")))
-  ``
+        (:symbol "+") (:whitespace " ")
+        (:number "2") (:whitespace " ")
+        (:number "2")))
+    ) # => true
 
   )
 
@@ -32,16 +40,22 @@
 
 (comment
 
-  (def some-src ``(def a 1)
+  (def some-src
+    ``
+    (def a 1)
 
-:b``)
+    :b
+    ``)
 
-  (first-form some-src)
-  ``'(:list
-      (:symbol "def") (:whitespace " ")
-      (:symbol "a") (:whitespace " ")
-      (:number "1"))
-  ``
+  (deep=
+    #
+    (first-form some-src)
+    #
+    '(:list
+       (:symbol "def") (:whitespace " ")
+       (:symbol "a") (:whitespace " ")
+       (:number "1"))
+    ) # => true
 
   )
 
@@ -113,15 +127,15 @@
   # => nil
 
   (def src-with-comment-and-def
-``
-(comment
+    ``
+    (comment
 
-  (def b 2)
+      (def b 2)
 
-)
+    )
 
-(def x 1)
-``)
+    (def x 1)
+    ``)
 
   (->> (rw/ast src-with-comment-and-def)
        (drop 1)
@@ -141,14 +155,17 @@
   (def src-with-discard
     "#_ {:a 1}")
 
-  (rw/ast src-with-discard)
-  ``'@[:code
+  (deep=
+    #
+    (rw/ast src-with-discard)
+    #
+    '@[:code
        (:discard
-        (:whitespace " ")
-        (:map
-         (:keyword ":a") (:whitespace " ")
-         (:number "1")))]
-  ``
+         (:whitespace " ")
+         (:map
+           (:keyword ":a") (:whitespace " ")
+           (:number "1")))]
+    ) # => true
 
   (discard-with-form? (first-form src-with-discard))
   # => true
@@ -179,12 +196,15 @@
 
 (comment
 
-  (first-form "(+ 1 1)")
-  ``'(:list
-      (:symbol "+") (:whitespace " ")
-      (:number "1") (:whitespace " ")
-      (:number "1"))
-  ``
+  (deep=
+    #
+    (first-form "(+ 1 1)")
+    #
+    '(:list
+       (:symbol "+") (:whitespace " ")
+       (:number "1") (:whitespace " ")
+       (:number "1"))
+    ) # => true
 
   (list-head (first-form "(+ 1 1)"))
   # => '(:symbol "+")
@@ -192,14 +212,20 @@
   (list-head (first-form "( + 1 1)"))
   # => '(:symbol "+")
 
-  (list-head (first-form
-``(;; hi
-+ 1 1)``))
+  (list-head
+    (first-form
+      ``
+      (;; hi
+      + 1 1)
+      ``))
   # => '(:symbol "+")
 
-  (list-head (first-form
-``((comment :a)
-+ 1 1)``))
+  (list-head
+    (first-form
+      ``
+      ((comment :a)
+      + 1 1)
+      ``))
   # => '(:symbol "+")
 
   (list-head (first-form "(#_ - + 1 1)"))
@@ -247,32 +273,42 @@
   (def src-with-just-ns
     "(ns fun-namespace.main)")
 
-  (first-form src-with-just-ns)
-  ``'(:list
-      (:symbol "ns") (:whitespace " ")
-      (:symbol "fun-namespace.main"))
-  ``
+  (deep=
+    #
+    (first-form src-with-just-ns)
+    #
+    '(:list
+       (:symbol "ns") (:whitespace " ")
+       (:symbol "fun-namespace.main"))
+    ) # => true
 
-  (ns-form? (first-form src-with-just-ns))
-  ``'(:list
-      (:symbol "ns") (:whitespace " ")
-      (:symbol "fun-namespace.main"))
-  ``
+  (deep=
+    #
+    (ns-form? (first-form src-with-just-ns))
+    #
+    '(:list
+       (:symbol "ns") (:whitespace " ")
+       (:symbol "fun-namespace.main"))
+    ) # => true
 
   (def src-with-ns
-``;; hi
-(ns my-ns.core)
+    ``
+    ;; hi
+    (ns my-ns.core)
 
-(defn a [] 1)
+    (defn a [] 1)
 
-(def b 2)
-``)
+    (def b 2)
+    ``)
 
-  (some ns-form? (forms src-with-ns))
-  ``'(:list
-      (:symbol "ns") (:whitespace " ")
-      (:symbol "my-ns.core"))
-  ``
+  (deep=
+    #
+    (some ns-form? (forms src-with-ns))
+    #
+    '(:list
+       (:symbol "ns") (:whitespace " ")
+       (:symbol "my-ns.core"))
+    ) # => true
 
   )
 
@@ -288,19 +324,25 @@
   (def in-ns-expr
     "(in-ns 'clojure.core)")
 
-  (first-form in-ns-expr)
-  ``'(:list
-      (:symbol "in-ns") (:whitespace " ")
-      (:quote
-       (:symbol "clojure.core")))
-  ``
+  (deep=
+    #
+    (first-form in-ns-expr)
+    #
+    '(:list
+       (:symbol "in-ns") (:whitespace " ")
+       (:quote
+         (:symbol "clojure.core")))
+    ) # => true
 
-  (in-ns-form? (first-form in-ns-expr))
-  ``'(:list
-      (:symbol "in-ns") (:whitespace " ")
-      (:quote
-       (:symbol "clojure.core")))
-  ``
+  (deep=
+    #
+    (in-ns-form? (first-form in-ns-expr))
+    #
+    '(:list
+       (:symbol "in-ns") (:whitespace " ")
+       (:quote
+         (:symbol "clojure.core")))
+    ) # => true
 
   )
 
@@ -384,24 +426,26 @@
 (comment
 
   (def some-src-with-ns
-``;; hi
+    ``
+    ;; hi
 
-"random string"
+    "random string"
 
-(ns your-ns.core)
+    (ns your-ns.core)
 
-(defn x [] 8)
+    (defn x [] 8)
 
-(def c [])
-``)
+    (def c [])
+    ``)
 
   (name-of-ns (some ns-form? (forms some-src-with-ns)))
   # => "your-ns.core"
 
   (def ns-with-meta
-``(ns ^{:doc "some doc string"
-       :author "some author"}
-  tricky-ns.here)``)
+    ``
+    (ns ^{:doc "some doc string"
+          :author "some author"}
+      tricky-ns.here)``)
 
   (name-of-ns (some ns-form? (forms ns-with-meta)))
   # => "tricky-ns.here"
@@ -445,54 +489,58 @@
 (comment
 
   (def sample-src-with-ns
-``;; nice comment
-;; another nice comment
+    ``
+    ;; nice comment
+    ;; another nice comment
 
-#_ putting-a-symbol-here-should-be-fin
+    #_ putting-a-symbol-here-should-be-fin
 
-(ns target-ns.main)
+    (ns target-ns.main)
 
-(comment
+    (comment
 
-  ;; hey mate
+      ;; hey mate
 
-)
+    )
 
-(defn repl
-  []
-  :fun)
+    (defn repl
+      []
+      :fun)
 
-``)
+    ``)
 
   (detect-ns sample-src-with-ns)
   # => "target-ns.main"
 
   (def src-with-ns-in-meta-node
-``(ns ^{:doc "some doc string"
-        :author "some author"}
-    funname.here
-    (:refer-clojure :exclude (replace remove next)))``)
+    ``
+    (ns ^{:doc "some doc string"
+          :author "some author"}
+        funname.here
+        (:refer-clojure :exclude (replace remove next)))``)
 
-  (forms src-with-ns-in-meta-node)
-  ``'((:list
-       (:symbol "ns") (:whitespace " ")
-       (:metadata
-        (:metadata-entry
-         (:map
-          (:keyword ":doc") (:whitespace " ")
-          (:string "\"some doc string\"") (:whitespace "\n        ")
-          (:keyword ":author") (:whitespace " ")
-          (:string "\"some author\""))) (:whitespace "\n    ")
-        (:symbol "funname.here"))
-       (:whitespace "\n    ")
-       (:list
-        (:keyword ":refer-clojure") (:whitespace " ")
-        (:keyword ":exclude") (:whitespace " ")
+  (deep=
+    #
+    (forms src-with-ns-in-meta-node)
+    #
+    '((:list
+        (:symbol "ns") (:whitespace " ")
+        (:metadata
+          (:metadata-entry
+            (:map
+              (:keyword ":doc") (:whitespace " ")
+              (:string "\"some doc string\"") (:whitespace "\n      ")
+              (:keyword ":author") (:whitespace " ")
+              (:string "\"some author\""))) (:whitespace "\n    ")
+          (:symbol "funname.here"))
+        (:whitespace "\n    ")
         (:list
-         (:symbol "replace") (:whitespace " ")
-         (:symbol "remove") (:whitespace " ")
-         (:symbol "next")))))
-  ``
+          (:keyword ":refer-clojure") (:whitespace " ")
+          (:keyword ":exclude") (:whitespace " ")
+          (:list (:symbol "replace") (:whitespace " ")
+                 (:symbol "remove") (:whitespace " ")
+                 (:symbol "next")))))
+    ) # => true
 
   (detect-ns src-with-ns-in-meta-node)
   # => "funname.here"
